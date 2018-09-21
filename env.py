@@ -12,3 +12,6 @@ TESTSET_PATH = os.path.join(DATASET_PATH, 'ai_challenger_sentiment_analysis_test
 TRAINSET_CSV = os.path.join(TRAINSET_PATH, 'sentiment_analysis_trainingset.csv')
 VALSET_CSV = os.path.join(VALSET_PATH, 'sentiment_analysis_validationset.csv')
 TESTSET_CSV = os.path.join(TESTSET_PATH, 'sentiment_analysis_testa.csv')
+
+STOPWORDS_PATH = os.path.join(DATA_PATH, "stopwords")
+HIT_TXT = os.path.join(STOPWORDS_PATH, "HIT.txt")

@@ -15,3 +15,6 @@ TESTSET_CSV = os.path.join(TESTSET_PATH, 'sentiment_analysis_testa.csv')
 
 STOPWORDS_PATH = os.path.join(DATA_PATH, "stopwords")
 HIT_TXT = os.path.join(STOPWORDS_PATH, "HIT.txt")
+
+FEATURES_PATH = os.path.join(DATA_PATH, 'features')
+CACHES_PATH = os.path.join(DATA_PATH, 'caches')

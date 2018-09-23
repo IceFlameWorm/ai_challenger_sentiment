@@ -1,4 +1,5 @@
 import jieba
+from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
@@ -15,14 +16,19 @@ def segment_words(series, stopwords = None):
     """
     Segment words and remove the first and last words(quotation marks)
     """
+    pbar = tqdm(total = len(series))
     def seg(x):
         words = list(jieba.cut(x))[1:-1]
         if stopwords is None:
-            return words
+            res = words
         else:
-            return [word for word in words if word not in stopwords]
+            res = [word for word in words if word not in stopwords]
+        pbar.update(1)
+        return res
 
-    return series.apply(seg)
+    res =  series.apply(seg)
+    pbar.close()
+    return res
 
 
 def rm_stopwords(series, stopwords):
@@ -65,4 +71,4 @@ def padseqs(train_seqs, val_seqs, test_seqs):
     train_seqs_padded = pad_sequences(train_seqs, maxlen = max_len)
     val_seqs_padded = pad_sequences(val_seqs, maxlen = max_len)
     test_seqs_padded = pad_sequences(test_seqs, maxlen = max_len)
-    return train_seqs_padded, val_seqs_padded, test_seqs_padded
+    return (train_seqs_padded, val_seqs_padded, test_seqs_padded), max_len

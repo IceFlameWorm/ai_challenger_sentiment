@@ -18,3 +18,7 @@ HIT_TXT = os.path.join(STOPWORDS_PATH, "HIT.txt")
 
 FEATURES_PATH = os.path.join(DATA_PATH, 'features')
 CACHES_PATH = os.path.join(DATA_PATH, 'caches')
+
+SAVED_MODELS_PATH = os.path.join(DATA_PATH, 'saved_models')
+
+RESULTS_PATH = os.path.join(DATA_PATH, 'results')

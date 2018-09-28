@@ -31,9 +31,13 @@ stopwords = gen_stopwords(HIT_TXT)
 def rm_quomarks(x):
     return x[1:-1]
 
-train_simple = list(trad2simple(train.content.apply(rm_quomarks)))
-val_simple = list(trad2simple(val.content.apply(rm_quomarks)))
-test_simple = list(trad2simple(test.content.apply(rm_quomarks)))
+train_simple = trad2simple(train.content.apply(rm_quomarks))
+val_simple = trad2simple(val.content.apply(rm_quomarks))
+test_simple = trad2simple(test.content.apply(rm_quomarks))
+
+train_simple = list(rm_non_Chinese(train_simple))
+val_simple = list(rm_non_Chinese(val_simple))
+test_simple = list(rm_non_Chinese(test_simple))
 
 # train_words = list(segment_words(train_simple, stopwords))
 # val_words = list(segment_words(val_simple, stopwords))

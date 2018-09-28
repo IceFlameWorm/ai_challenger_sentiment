@@ -1,4 +1,5 @@
 import jieba
+import re
 from tqdm import tqdm
 from snownlp import SnowNLP
 from keras.preprocessing.text import Tokenizer
@@ -84,5 +85,18 @@ def trad2simple(series):
         return s.han
 
     res = series.apply(_tran2simple)
+    pbar.close()
+    return res
+
+
+def rm_non_Chinese(series):
+    pbar = tqdm(total = len(series))
+
+    def _rm_non_Chinese(x):
+        res = re.sub('[^\u4e00-\u9fa5A-Za-z0-9]', '', x)
+        pbar.update(1)
+        return res
+
+    res = series.apply(_rm_non_Chinese)
     pbar.close()
     return res

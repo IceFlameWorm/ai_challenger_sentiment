@@ -35,6 +35,11 @@ train_simple = trad2simple(train.content.apply(rm_quomarks))
 val_simple = trad2simple(val.content.apply(rm_quomarks))
 test_simple = trad2simple(test.content.apply(rm_quomarks))
 
+# rm non-Chinese chars
+train_simple = rm_non_Chinese(train_simple)
+val_simple = rm_non_Chinese(val_simple)
+test_simple = rm_non_Chinese(test_simple)
+
 train_words = list(segment_words(train_simple, stopwords))
 val_words = list(segment_words(val_simple, stopwords))
 test_words = list(segment_words(test_simple, stopwords))

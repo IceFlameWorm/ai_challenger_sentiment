@@ -1,5 +1,6 @@
 import jieba
 from tqdm import tqdm
+from snownlp import SnowNLP
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
@@ -72,3 +73,16 @@ def padseqs(train_seqs, val_seqs, test_seqs):
     val_seqs_padded = pad_sequences(val_seqs, maxlen = max_len)
     test_seqs_padded = pad_sequences(test_seqs, maxlen = max_len)
     return (train_seqs_padded, val_seqs_padded, test_seqs_padded), max_len
+
+
+def trad2simple(series):
+    pbar = tqdm(total = len(series))
+
+    def _tran2simple(x):
+        s = SnowNLP(x)
+        pbar.update(1)
+        return s.han
+
+    res = series.apply(_tran2simple)
+    pbar.close()
+    return res

@@ -19,7 +19,7 @@ def segment_words(series, stopwords = None):
     """
     pbar = tqdm(total = len(series))
     def seg(x):
-        words = list(jieba.cut(x))[1:-1]
+        words = list(jieba.cut(x))
         if stopwords is None:
             res = words
         else:
@@ -41,7 +41,7 @@ def rm_stopwords(series, stopwords):
     return series.apply(rm)
 
 
-def text2seqs(train_texts, val_texts, test_texts):
+def text2seqs(train_texts, val_texts, test_texts, num_words = 50000, char_level = False):
     """
     Args:
         train_texts: list of words
@@ -53,7 +53,7 @@ def text2seqs(train_texts, val_texts, test_texts):
         val_seqs: list of integers
         test_seqs: list of integers
     """
-    tokenizer = Tokenizer(num_words = 50000)
+    tokenizer = Tokenizer(num_words = num_words, char_level = char_level)
     all_texts = train_texts + val_texts + test_texts
     tokenizer.fit_on_texts(all_texts)
     train_seqs = tokenizer.texts_to_sequences(train_texts)

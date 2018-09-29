@@ -119,7 +119,7 @@ def main():
 
 class LinXiSingleModel(SingleModel):
     def _build(self, *args, **kwargs):
-        maxlen = kwargs.get('maxlen')
+        maxlen = kwargs['maxlen']
 
         # model = Sequential()
         # embedding_dim = 128
@@ -185,18 +185,16 @@ class LinXiSingleModel(SingleModel):
 
 class LinXiCompositeModel(CompositeModel):
     def fit(self, inputs, outputs, *args, **kwargs):
-        val = kwargs['val']
+        val_x, val_outputs = kwargs['val']
         y_cols = kwargs['y_cols']
         seq = kwargs['seq']
 
-        train = inputs
-        train_x = np.array(train[seq].values.tolist(), dtype = np.int)
-        val_x = np.array(val[seq].values.tolist(), dtype = np.int)
+        train_x = inputs
 
         for i, comp in enumerate(self._comps):
             col = y_cols[i]
-            train_y = train[col] + 2
-            val_y = val[col] + 2
+            train_y = outputs[col] + 2
+            val_y = val_outputs[col] + 2
             y_train_onehot = to_categorical(train_y)
             y_val_onehot = to_categorical(val_y)
             MODEL_PRE = os.path.join(SAVED_MODELS_PATH, 'linxi', 'cnn_')

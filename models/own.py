@@ -1,6 +1,6 @@
 from .base import SingleModel
 from keras.layers import Input, Embedding, Conv1D, MaxPooling1D
-from keras.layers import GlobalMaxPooling1D, Dense
+from keras.layers import GlobalMaxPooling1D, Dense, Dropout, BatchNormalization
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
@@ -9,6 +9,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 class OwnSingleModel(SingleModel):
     def _build(self, *args, **kwargs):
         max_len = kwargs['max_len']
+        embedding = kwargs.get('embedding')
         inp = Input(shape = (max_len,))
         out0 = self._base0(inp)
         out1 = self._base1(out0)
@@ -68,13 +69,16 @@ class OwnSingleModel(SingleModel):
                   ]
         return Model(inputs = inputs, outputs = outputs)
 
-    def _base0(self, inp, words_num = 50000):
+    def _base0(self, inp, words_num = 50000, embedding = None):
         """
         Embedding Layers
         """
-        out = Embedding(words_num, 128)(inp)
-        out = Conv1D(32, 3, activation = 'relu')(out)
-        out = Conv1D(32, 3, activation = 'relu')(out)
+        if embedding is None:
+            out = Embedding(words_num, 128)(inp)
+        else:
+            out = Embedding(words_num, 128, weights = [embedding], trainable = False)(inp)
+        # out = Conv1D(32, 3, activation = 'relu')(out)
+        # out = Conv1D(32, 3, activation = 'relu')(out)
         # out = MaxPooling1D(2)(out)
         # out = Conv1D(64, 3, activation = 'relu')(out)
         # out = Conv1D(64, 3, activation = 'relu')(out)
@@ -84,16 +88,20 @@ class OwnSingleModel(SingleModel):
         # out = MaxPooling1D(2)(out)
         # out = Conv1D(256, 3, activation = 'relu')(out)
         # out = Conv1D(256, 3, activation = 'relu')(out)
-        out = GlobalMaxPooling1D()(out)
+        # out = GlobalMaxPooling1D()(out)
         return out
 
     def _basei(self, inp):
         out = inp
-        # out = Conv1D(128, 3, activation = 'relu')(inp)
-        # out = MaxPooling1D(2)(out)
-        # out = Conv1D(256, 3, activation = 'relu')(out)
-        # out = MaxPooling1D(2)(out)
-        # out = GlobalMaxPooling1D()(out)
+        out = Conv1D(32, 3, activation = 'relu')(inp)
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
+        #out = MaxPooling1D(2)(out)
+        #out = Conv1D(32, 3, activation = 'relu')(out)
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
+        #out = MaxPooling1D(2)(out)
+        out = GlobalMaxPooling1D()(out)
         return out
 
     def _clsi_j(self, inp):
@@ -196,7 +204,7 @@ class OwnSingleModel(SingleModel):
         return self._clsi_j(inp)
 
     def fit(self, inputs, outputs, *args, **kwargs):
-        lr = 1e-3
+        lr = 1e-4
         BATCH_SIZE = 64
         EPOCHS = 300
         PATIENCE = 6
@@ -211,7 +219,7 @@ class OwnSingleModel(SingleModel):
                                save_best_only = True,
                                mode = 'max'),
                EarlyStopping(patience = PATIENCE),
-               ReduceLROnPlateau('val_loss', factor = 0.2, verbose = 1,
+               ReduceLROnPlateau('val_loss', factor = 0.1, verbose = 1,
                                  patience = int(PATIENCE / 2))
               ]
         history = self._model.fit(inputs, outputs,

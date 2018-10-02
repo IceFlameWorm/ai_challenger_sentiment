@@ -100,4 +100,6 @@ venv.bak/
 # mkdocs documentation
 /site
 
+.idea/
+
 data/

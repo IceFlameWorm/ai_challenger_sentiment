@@ -12,15 +12,18 @@ from env import *
 from utils.dataset import DataSet
 from utils.transform import *
 
-SAVED_PATH = os.path.join(CACHES_PATH, 'word_seqs/simple')
 
 ####### Temp ######
-CHARS_SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs/simple')
+CHARS_SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs', 'simple')
+if not os.path.exists(CHARS_SAVED_PATH):
+    os.makedirs(CHARS_SAVED_PATH)
 TRAIN_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'train_chars.pkl')
 VAL_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'val_chars.pkl')
 TEST_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'test_chars.pkl')
 ###################
-
+SAVED_PATH = os.path.join(CACHES_PATH, 'word_seqs', 'simple')
+if not os.path.exists(SAVED_PATH):
+    os.makedirs(SAVED_PATH)
 TRAIN_WORDS_PKL = os.path.join(SAVED_PATH, 'train_words.pkl')
 VAL_WORDS_PKL = os.path.join(SAVED_PATH, 'val_words.pkl')
 TEST_WORDS_PKL = os.path.join(SAVED_PATH, 'test_words.pkl')

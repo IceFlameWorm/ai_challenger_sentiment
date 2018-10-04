@@ -1,17 +1,19 @@
+import numpy as np
 from .base import SingleModel
-from keras.layers import Input, Embedding, Conv1D, MaxPooling1D
+from keras.layers import Input, Embedding, Conv1D, MaxPooling1D, Concatenate
 from keras.layers import GlobalMaxPooling1D, Dense, Dropout, BatchNormalization
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
-
+from utils.callbacks import CustomModelCheckPoint
+from sklearn.metrics import f1_score
 
 class OwnSingleModel(SingleModel):
     def _build(self, *args, **kwargs):
         max_len = kwargs['max_len']
         embedding = kwargs.get('embedding')
         inp = Input(shape = (max_len,))
-        out0 = self._base0(inp)
+        out0 = self._base0(inp, embedding=embedding)
         out1 = self._base1(out0)
         out2 = self._base2(out0)
         out3 = self._base3(out0)
@@ -74,9 +76,9 @@ class OwnSingleModel(SingleModel):
         Embedding Layers
         """
         if embedding is None:
-            out = Embedding(words_num, 128)(inp)
+            out = Embedding(words_num, 100)(inp)
         else:
-            out = Embedding(words_num, 128, weights = [embedding], trainable = False)(inp)
+            out = Embedding(words_num, 100, weights = [embedding], trainable = False)(inp)
         # out = Conv1D(32, 3, activation = 'relu')(out)
         # out = Conv1D(32, 3, activation = 'relu')(out)
         # out = MaxPooling1D(2)(out)
@@ -93,7 +95,7 @@ class OwnSingleModel(SingleModel):
 
     def _basei(self, inp):
         out = inp
-        out = Conv1D(32, 3, activation = 'relu')(inp)
+        #out = Conv1D(32, 3, activation = 'relu')(inp)
         #out = Dropout(0.5)(out)
         #out = BatchNormalization()(out)
         #out = MaxPooling1D(2)(out)
@@ -101,11 +103,19 @@ class OwnSingleModel(SingleModel):
         #out = Dropout(0.5)(out)
         #out = BatchNormalization()(out)
         #out = MaxPooling1D(2)(out)
-        out = GlobalMaxPooling1D()(out)
+        #out = GlobalMaxPooling1D()(out)
         return out
 
     def _clsi_j(self, inp):
-        return Dense(4, activation = 'softmax')(inp)
+        out = inp
+        out1 = Conv1D(32, 3, activation= 'relu')(out)
+        out1 = GlobalMaxPooling1D()(out1)
+        out2 = Conv1D(32, 5, activation= 'relu')(out)
+        out2 = GlobalMaxPooling1D()(out2)
+        out3 = Conv1D(32, 7, activation= 'relu' )(out)
+        out3 = GlobalMaxPooling1D()(out3)
+        out = Concatenate(axis= -1)([out1, out2, out3])
+        return Dense(4, activation = 'softmax')(out)
 
     def _base1(self, inp):
         """
@@ -204,20 +214,27 @@ class OwnSingleModel(SingleModel):
         return self._clsi_j(inp)
 
     def fit(self, inputs, outputs, *args, **kwargs):
-        lr = 1e-4
+        lr = 1e-3
         BATCH_SIZE = 64
         EPOCHS = 300
-        PATIENCE = 6
+        PATIENCE = 4
         model_file = kwargs['model_file']
         val_inputs, val_outputs = kwargs['validation_data']
 
         self._model.compile(optimizer = Adam(lr),
                             loss = 'categorical_crossentropy',
                             )
-        cbs = [ModelCheckpoint(model_file,
-                               monitor = 'val_loss',
-                               save_best_only = True,
-                               mode = 'max'),
+        cbs = [
+#               ModelCheckpoint(model_file,
+#                               monitor = 'val_loss',
+#                               save_best_only = True,
+#                               mode = 'max'),
+               CustomModelCheckPoint(model_file,
+                                     monitor = self._f1_monitor,
+                                     save_best_only = True,
+                                     mode = 'max',
+                                     verbose = 1,
+                                     val_data = (val_inputs, val_outputs)),
                EarlyStopping(patience = PATIENCE),
                ReduceLROnPlateau('val_loss', factor = 0.1, verbose = 1,
                                  patience = int(PATIENCE / 2))
@@ -229,6 +246,15 @@ class OwnSingleModel(SingleModel):
                                   callbacks = cbs,
                                   verbose = 1
                                  )
+        
+    def _f1_monitor(self, y_trues, y_preds):
+        y_preds = list(map(lambda x: np.argmax(x, axis = -1), y_preds))
+        y_trues = list(map(lambda x: np.argmax(x, axis = -1), y_trues))
+        f1s = 0
+        for i, (vy, vp) in enumerate(zip(y_trues, y_preds)):
+            f1 = f1_score(vy, vp, average='macro')
+            f1s += f1
+        return f1s / len(y_trues)
 
     def predict(self, inputs, *args, **kwargs):
         return self._model.predict(inputs)

@@ -1,3 +1,5 @@
+import warnings
+import numpy as np
 from keras.callbacks import *
 
 class CyclicLR(Callback):
@@ -129,3 +131,69 @@ class CyclicLR(Callback):
             self.history.setdefault(k, []).append(v)
         
         K.set_value(self.model.optimizer.lr, self.clr())
+        
+
+class CustomModelCheckPoint(Callback):
+    def __init__(self, filepath,
+                 monitor = None,
+                 verbose = 0,
+                 save_best_only = False,
+                 save_weights_only = False,
+                 mode = 'max',
+                 period = 1,
+                 val_data = None):
+        super(CustomModelCheckPoint, self).__init__()
+        self.monitor = monitor
+        self.verbose = verbose
+        self.filepath = filepath
+        self.save_best_only = save_best_only
+        self.save_weights_only = save_weights_only
+        self.period = period
+        self.epochs_since_last_save = 0
+        self.val_data = val_data
+        
+        if mode == 'max':
+            self.monitor_op = np.greater
+            self.best = -np.Inf
+        elif mode == 'min':
+            self.monitor_op = np.less
+            self.best = np.Inf
+        else:
+            raise Exception("Unsupported mode %s." % mode)
+            
+    def on_epoch_end(self, epoch, logs = None):
+        logs = logs or {}
+        self.epochs_since_last_save += 1
+        if self.epochs_since_last_save >= self.period:
+            self.epochs_since_last_save = 0
+            val_x, val_ytrue = self.val_data
+            val_ypred = self.model.predict(val_x)
+            filepath = self.filepath.format(epoch=epoch + 1, **logs)
+            if self.save_best_only:
+                current = self.monitor(val_ytrue, val_ypred)
+                if current is None:
+                    warnings.warn('Can save best model only with %s available, '
+                                  'skipping.' % (self.monitor.__name__), RuntimeWarning)
+                else:
+                    if self.monitor_op(current, self.best):
+                        if self.verbose > 0:
+                            print('\nEpoch %05d: %s improved from %0.5f to %0.5f,'
+                                          ' saving model to %s'
+                                          % (epoch + 1, self.monitor.__name__, self.best, current, filepath))
+                        self.best = current
+                        if self.save_weights_only:
+                            self.model.save_weights(filepath, overwrite = True)
+                        else:
+                            self.model.save(filepath, overwrite = True)
+                    else:
+                        if self.verbose > 0:
+                            print('\nEpoch %05d: %s did not improve from %0.5f' %
+                                          (epoch + 1, self.monitor.__name__, self.best))
+            else:
+                if self.verbose > 0:
+                    print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
+                
+                if self.save_weights_only:
+                    self.model.save_weights(filepath, overwrite=True)
+                else:
+                    self.model.save(filepath, overwrite=True)

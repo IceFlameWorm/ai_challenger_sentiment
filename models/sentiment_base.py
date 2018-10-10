@@ -1,3 +1,4 @@
+import numpy as np
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from .base import SingleModel, CompositeModel
@@ -48,6 +49,9 @@ class SSingleModel(SingleModel):
 
         f1 = f1_score(y_true, y_pred, average='macro')
         return f1
+
+    def predict(self, inputs, *args, **kwargs):
+        return np.argmax(self._model.predict(inputs), axis = -1)
 
 
 class SCompositeModel(CompositeModel):

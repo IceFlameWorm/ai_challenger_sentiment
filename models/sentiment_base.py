@@ -1,6 +1,8 @@
 import numpy as np
+from sklearn.metrics import f1_score, accuracy_score
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.utils import to_categorical
 from .base import SingleModel, CompositeModel
 from utils.callbacks import CustomModelCheckPoint
 

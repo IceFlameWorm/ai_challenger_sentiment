@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from sklearn.metrics import f1_score, accuracy_score
 from keras.optimizers import Adam
@@ -83,7 +84,9 @@ class SCompositeModel(CompositeModel):
             val_y_onehot = to_categorical(val_y)
             model_file = model_pre + str(i) + '.h5'
             comp.fit(train_x, train_y_onehot, model_file = model_file,
-                     validation_data = (val_x, val_y_onehot))
+                     validation_data = (val_x, val_y_onehot),
+                     lr = lr, epochs = epochs, batch_size = batch_size,
+                     patience = patience, factor = factor)
             comp.load_weights(model_file)
             val_y_pred = comp.predict(val_x)
 

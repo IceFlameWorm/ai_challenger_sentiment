@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from sklearn.metrics import f1_score, accuracy_score
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.utils import to_categorical
 from .base import SingleModel, CompositeModel
@@ -18,7 +18,9 @@ class SSingleModel(SingleModel):
         val_x, val_y_onehot = kwargs['validation_data']
         model_file = kwargs['model_file']
 
-        self._model.compile(optimizer = Adam(lr),
+        self._model.compile(
+                            # optimizer = Adam(lr),
+                            optimizer = optimizer,
                             loss = 'categorical_crossentropy',
                             metrics = ['acc']
                            )
@@ -63,12 +65,13 @@ class SCompositeModel(CompositeModel):
         y_cols = kwargs['y_cols']
         seq = kwargs['seq']
         SAVED_PATH = kwargs['saved_path']
+        optimizer = kwargs['optimizer']
 
         lr = kwargs.get('lr', 1e-3)
         epochs = kwargs.get('epochs', 100)
         batch_size = kwargs.get('batch_size', 64)
         patience = kwargs.get('patience', 6)
-        factor = kwargs.get('factor', 0.2)
+        factor = kwargs.get('factor', 0.1)
         model_pre = os.path.join(SAVED_PATH, kwargs.get('model_pre', 'model_'))
 
 
@@ -86,7 +89,8 @@ class SCompositeModel(CompositeModel):
             comp.fit(train_x, train_y_onehot, model_file = model_file,
                      validation_data = (val_x, val_y_onehot),
                      lr = lr, epochs = epochs, batch_size = batch_size,
-                     patience = patience, factor = factor)
+                     patience = patience, factor = factor,
+                     optimizer = optimizer)
             comp.load_weights(model_file)
             val_y_pred = comp.predict(val_x)
 

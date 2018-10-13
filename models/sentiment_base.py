@@ -14,6 +14,7 @@ class SSingleModel(SingleModel):
         BATCH_SIZE = kwargs['batch_size']
         PATIENCE = kwargs['patience']
         FACTOR = kwargs['factor']
+        optimizer = kwargs['optimizer']
 
         val_x, val_y_onehot = kwargs['validation_data']
         model_file = kwargs['model_file']

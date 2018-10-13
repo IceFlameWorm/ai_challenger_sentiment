@@ -77,7 +77,7 @@ class BiCuDNNGRULast(BaseRNN):
 class BiCuDNNGRUSeq(BaseRNN):
     def _rnn(self, inp1, inp2):
         rnn_dim = 100
-        shared_bigru = Bidirectional(CuDNNGRU(rnn_dim, return_sequences=False))
+        shared_bigru = Bidirectional(CuDNNGRU(rnn_dim, return_sequences=True))
         shared_shrink = Lambda(lambda x: K.mean(x, axis = 1),
                                output_shape = (2 *rnn_dim, ))
 

@@ -57,18 +57,35 @@ class GRULast(BaseRNN):
         out = Concatenate()([out1, out2])
         return out
 
-class BiCuDNNGRU(BaseRNN):
+class BiCuDNNGRULast(BaseRNN):
     def _rnn(self, inp1, inp2):
         rnn_dim = 100
         shared_bigru = Bidirectional(CuDNNGRU(rnn_dim, return_sequences=False))
-        shared_shrink = Lambda(lambda x: K.max(x, axis = 1),
-                               output_shape = (2 *rnn_dim, ))
+        #shared_shrink = Lambda(lambda x: K.max(x, axis = 1),
+        #                       output_shape = (2 *rnn_dim, ))
 
         out1 = shared_bigru(inp1)
         #out1 = shared_shrink(out1)
 
         out2 = shared_bigru(inp2)
         #out2 = shared_shrink(out2)
+
+        out = Concatenate()([out1, out2])
+        #out = Dropout(0.5)(out)
+        return out
+
+class BiCuDNNGRUSeq(BaseRNN):
+    def _rnn(self, inp1, inp2):
+        rnn_dim = 100
+        shared_bigru = Bidirectional(CuDNNGRU(rnn_dim, return_sequences=False))
+        shared_shrink = Lambda(lambda x: K.mean(x, axis = 1),
+                               output_shape = (2 *rnn_dim, ))
+
+        out1 = shared_bigru(inp1)
+        out1 = shared_shrink(out1)
+
+        out2 = shared_bigru(inp2)
+        out2 = shared_shrink(out2)
 
         out = Concatenate()([out1, out2])
         out = Dropout(0.5)(out)

@@ -91,7 +91,7 @@ class SCompositeModel(CompositeModel):
                      validation_data = (val_x, val_y_onehot),
                      lr = lr, epochs = epochs, batch_size = batch_size,
                      patience = patience, factor = factor,
-                     optimizer = optimizer)
+                     optimizer = optimizer(lr))
             comp.load_weights(model_file)
             val_y_pred = comp.predict(val_x)
 

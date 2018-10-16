@@ -1,7 +1,8 @@
 from keras.layers import Input, CuDNNGRU, CuDNNLSTM
 from keras.layers import GRU, Bidirectional, Lambda
 from keras.layers import Embedding, Dense, Concatenate
-from keras.layers import Dropout
+from keras.layers import Dropout, GlobalMaxPooling1D, BatchNormalization
+from keras.layers import Conv1D
 from keras import backend as K
 from keras.models import Model
 from .sentiment_base import SSingleModel
@@ -88,5 +89,32 @@ class BiCuDNNGRUSeq(BaseRNN):
         out2 = shared_shrink(out2)
 
         out = Concatenate()([out1, out2])
+        out = Dropout(0.5)(out)
+        return out
+
+class SimpleRCNN(BaseRNN):
+    def _rnn(self, inp1, inp2):
+        rnn_dim = 100
+        shared_bigru = Bidirectional(CuDNNGRU(rnn_dim, return_sequences=True))
+        # shared_shrink = Lambda(lambda x: K.mean(x, axis = 1),
+        #                        output_shape = (2 *rnn_dim, ))
+
+        out1 = shared_bigru(inp1)
+        #out1 = shared_shrink(out1)
+
+        out2 = shared_bigru(inp2)
+        #out2 = shared_shrink(out2)
+
+        cnn_dim = 100
+        shared_conv = Conv1D(cnn_dim, 1, activation = 'tanh')
+        out3 = shared_conv(inp1)
+        out4 = shared_conv(inp2)
+        out = Concatenate()([out1,
+                             out2,
+                             out3,
+                             out4
+                            ])
+        out = GlobalMaxPooling1D()(out)
+        out = BatchNormalization()(out)
         out = Dropout(0.5)(out)
         return out

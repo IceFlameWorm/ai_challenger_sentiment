@@ -63,13 +63,13 @@ def text2seqs(train_texts, val_texts, test_texts, num_words = 50000, char_level 
     return (train_seqs, val_seqs, test_seqs), tokenizer.word_index
 
 
-def padseqs(train_seqs, val_seqs, test_seqs):
+def padseqs(train_seqs, val_seqs, test_seqs, max_len = 300):
     """
     Args:
         list of integers
     """
     all_seqs = train_seqs + val_seqs + test_seqs
-    max_len = max(map(len, all_seqs))
+    # max_len = max(map(len, all_seqs))
     train_seqs_padded = pad_sequences(train_seqs, maxlen = max_len)
     val_seqs_padded = pad_sequences(val_seqs, maxlen = max_len)
     test_seqs_padded = pad_sequences(test_seqs, maxlen = max_len)

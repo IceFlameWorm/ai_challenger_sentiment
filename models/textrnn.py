@@ -2,7 +2,7 @@ from keras.layers import Input, CuDNNGRU, CuDNNLSTM
 from keras.layers import GRU, Bidirectional, Lambda
 from keras.layers import Embedding, Dense, Concatenate
 from keras.layers import Dropout, GlobalMaxPooling1D, BatchNormalization
-from keras.layers import Conv1D
+from keras.layers import Conv1D, SpatialDropout1D
 from keras import backend as K
 from keras.models import Model
 from .sentiment_base import SSingleModel
@@ -16,21 +16,22 @@ class BaseRNN(SSingleModel):
 
         inp = Input(shape = (max_len, ))
         out1 = self._static_emb(inp, embedding, mask_zero)
-        out2 = self._dynamic_emb(inp, mask_zero)
+        out2 = self._dynamic_emb(inp, embedding, mask_zero)
         out = self._rnn(out1, out2)
         out = self._cls(out)
         model = Model(inputs = inp, outputs = out)
         return model
 
-    def _static_emb(self, inp, embedding, mask_zero = False, words_num = 50000, dim = 100):
+    def _static_emb(self, inp, embedding, mask_zero = False, words_num = 50000, dim = 300):
         out = Embedding(words_num,
                         dim, weights = [embedding],
                         mask_zero = mask_zero,
                         trainable=False)(inp)
         return out
 
-    def _dynamic_emb(self, inp, mask_zero = False, words_num = 50000, dim = 100):
+    def _dynamic_emb(self, inp, embedding, mask_zero = False, words_num = 50000, dim = 300):
         out = Embedding(words_num, dim,
+                        weights = [embedding],
                         mask_zero = mask_zero
                        )(inp)
         return out
@@ -44,10 +45,17 @@ class BaseRNN(SSingleModel):
 
 class CuDNNGRULast(BaseRNN):
     def _rnn(self, inp1, inp2):
+        out1, out2 = inp1, inp2
+        shared_spdropout = SpatialDropout1D(0.5)
         shared_gru = CuDNNGRU(100)
-        out1 = shared_gru(inp1)
-        out2 = shared_gru(inp2)
+        out1 = shared_spdropout(out1)
+        out1 = shared_gru(out1)
+        out2 = shared_spdropout(out2)
+        out2 = shared_gru(out2)
         out = Concatenate()([out1, out2])
+        # out = out1
+        out = Dropout(0.5)(out)
+        out = BatchNormalization()(out)
         return out
 
 class GRULast(BaseRNN):

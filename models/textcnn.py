@@ -32,7 +32,7 @@ class SingleTextCNN(SingleModel):
                         trainable=False)(inp)
         return out
 
-    def _dynamic_emb(self, inp, words_num = 50000, dim = 100):
+    def _dynamic_emb(self, inp, embedding, words_num = 50000, dim = 100):
         out = Embedding(words_num, dim,
                         weights = [embedding])(inp)
         return out

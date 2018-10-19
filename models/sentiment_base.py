@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np
 from sklearn.metrics import f1_score, accuracy_score
 from keras.optimizers import Adam, RMSprop
@@ -6,6 +7,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.utils import to_categorical
 from .base import SingleModel, CompositeModel
 from utils.callbacks import CustomModelCheckPoint
+from utils.augment import oversample
 
 class SSingleModel(SingleModel):
     def fit(self, inputs, outputs, *args, **kwargs):
@@ -45,6 +47,52 @@ class SSingleModel(SingleModel):
                                   validation_data=(val_x, val_y_onehot),
                                   callbacks = cbs,
                                   verbose = 1)
+
+    def fit_gen(self, inp_gen, *args, **kwargs):
+        lr = kwargs['lr']
+        EPOCHS = kwargs['epochs']
+        BATCH_SIZE = kwargs['batch_size']
+        PATIENCE = kwargs['patience']
+        FACTOR = kwargs['factor']
+        optimizer = kwargs['optimizer']
+
+        val_x, val_y_onehot = kwargs['validation_data']
+        model_file = kwargs['model_file']
+        steps_per_epoch = kwargs['steps_per_epoch']
+
+        self._model.compile(
+                            # optimizer = Adam(lr),
+                            optimizer = optimizer,
+                            loss = 'categorical_crossentropy',
+                            metrics = ['acc']
+                           )
+
+        cbs = [CustomModelCheckPoint(model_file,
+                                     monitor = self._f1_monitor,
+                                     save_best_only = True,
+                                     mode = 'max',
+                                     verbose = 1,
+                                     val_data=(val_x, val_y_onehot)
+                                    ),
+               EarlyStopping(patience = PATIENCE),
+               ReduceLROnPlateau('val_loss', factor = FACTOR,
+                                 verbose = 1,
+                                 patience = int(PATIENCE / 2))
+              ]
+
+        # history = self._model.fit(inputs, outputs,
+        #                           epochs = EPOCHS,
+        #                           batch_size = BATCH_SIZE,
+        #                           validation_data=(val_x, val_y_onehot),
+        #                           callbacks = cbs,
+        #                           verbose = 1)
+
+        history = self._model.fit_generator(inp_gen, epochs = EPOCHS,
+                                            validation_data = (val_x, val_y_onehot),
+                                            callbacks = cbs,
+                                            verbose = 1,
+                                            steps_per_epoch = steps_per_epoch
+                                           )
 
     def load_weights(self, weights_file):
         self._model.load_weights(weights_file)
@@ -92,8 +140,21 @@ class SCompositeModel(CompositeModel):
                      lr = lr, epochs = epochs, batch_size = batch_size,
                      patience = patience, factor = factor,
                      optimizer = optimizer(lr))
+
+            # inp_gen = oversample(train_x, train_y, batch_size)
+            # steps_per_epoch = int(math.ceil(len(train_y) / batch_size))
+            # comp.fit_gen(inp_gen,
+            #              model_file = model_file,
+            #              validation_data=(val_x, val_y_onehot),
+            #              lr = lr,
+            #              epochs = epochs,
+            #              batch_size = batch_size,
+            #              patience = patience,
+            #              factor = factor,
+            #              optimizer = optimizer(lr),
+            #              steps_per_epoch = steps_per_epoch
+            #             )
             comp.load_weights(model_file)
             val_y_pred = comp.predict(val_x)
-
             F1_score = f1_score(val_y, val_y_pred, average = 'macro')
             print("The %sth grain: f1_score - %s, acc - %s" % (i, F1_score, accuracy_score(val_y, val_y_pred)))

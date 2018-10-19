@@ -2,6 +2,9 @@ class BaseModel(object):
     def fit(self, inputs, outputs, *args, **kwargs):
         raise NotImplementedError
 
+    def fit_gen(self, inp_gen, *args, **kwargs):
+        raise NotImplementedError
+
     def predict(self, inputs, *args, **kwargs):
         raise NotImplementedError
 

@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import f1_score, accuracy_score
 from keras.layers import Input, Embedding, Dense, Concatenate
 from keras.layers import Conv1D, GlobalMaxPooling1D, Dropout
+from keras.layers import SpatialDropout1D, BatchNormalization
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -15,11 +16,12 @@ class SingleTextCNN(SingleModel):
     def _build(self, *args, **kwargs):
         max_len = kwargs['max_len']
         embedding = kwargs['embedding']
+        emb_dim = embedding.shape[1]
         inp = Input(shape=(max_len,))
-        out1 = self._static_emb(inp, embedding)
-        out2 = self._dynamic_emb(inp)
+        out1 = self._static_emb(inp, embedding, dim = emb_dim)
+        out2 = self._dynamic_emb(inp, embedding, dim = emb_dim)
         out = self._cnn(out1, out2)
-        out = self._dropout(out, rate = 0.5)
+        #out = self._dropout(out, rate = 0.5)
         out = self._cls(out)
         model = Model(inputs = inp, outputs = out)
         return model
@@ -31,11 +33,15 @@ class SingleTextCNN(SingleModel):
         return out
 
     def _dynamic_emb(self, inp, words_num = 50000, dim = 100):
-        out = Embedding(words_num, dim)(inp)
+        out = Embedding(words_num, dim,
+                        weights = [embedding])(inp)
         return out
 
     def _cnn(self, inp1, inp2, filter_sizes = [3,4,5], filter_num = 100):
         # Define shared conv layers
+        shared_spdropout = SpatialDropout1D(0.5)
+        inp1 = shared_spdropout(inp1)
+        inp2 = shared_spdropout(inp2)
         shared_convs = []
         for fs in filter_sizes:
             conv = Conv1D(filter_num, fs, activation = 'relu')
@@ -44,15 +50,19 @@ class SingleTextCNN(SingleModel):
         out1s = []
         out2s = []
         for conv in shared_convs:
+            shared_gm = GlobalMaxPooling1D()
             out1 = conv(inp1)
-            out1 = GlobalMaxPooling1D()(out1)
+            out1 = shared_gm(out1)
             out1s.append(out1)
             out2 = conv(inp2)
-            out2 = GlobalMaxPooling1D()(out2)
+            out2 = shared_gm(out2)
             out2s.append(out2)
 
-        outs = out1s + out2s
+        #outs = out1s + out2s
+        outs = out2s
         out = Concatenate()(outs)
+        out = Dropout(0.5)(out)
+        out = BatchNormalization()(out)
         return out
 
     def _dropout(self, inp, rate = 0.5):

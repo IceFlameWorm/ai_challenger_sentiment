@@ -12,7 +12,7 @@ from env import *
 from utils.dataset import DataSet
 from utils.transform import *
 
-SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs', 'simple')
+SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs_sw', 'simple')
 
 CHAR_INDEX_PKL = os.path.join(SAVED_PATH, 'char_index.pkl')
 TRAIN_SEQS_PKL = os.path.join(SAVED_PATH, 'train_seqs.pkl')

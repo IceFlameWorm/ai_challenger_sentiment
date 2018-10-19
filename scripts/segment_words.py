@@ -14,14 +14,14 @@ from utils.transform import *
 
 
 ####### Temp ######
-CHARS_SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs', 'simple')
+CHARS_SAVED_PATH = os.path.join(CACHES_PATH, 'char_seqs_sw', 'simple')
 if not os.path.exists(CHARS_SAVED_PATH):
     os.makedirs(CHARS_SAVED_PATH)
 TRAIN_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'train_chars.pkl')
 VAL_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'val_chars.pkl')
 TEST_CHARS_PKL = os.path.join(CHARS_SAVED_PATH, 'test_chars.pkl')
 ###################
-SAVED_PATH = os.path.join(CACHES_PATH, 'word_seqs', 'simple')
+SAVED_PATH = os.path.join(CACHES_PATH, 'word_seqs_sw', 'simple')
 if not os.path.exists(SAVED_PATH):
     os.makedirs(SAVED_PATH)
 TRAIN_WORDS_PKL = os.path.join(SAVED_PATH, 'train_words.pkl')
@@ -38,7 +38,8 @@ TEST_SEQS_PADDED_PKL = os.path.join(SAVED_PATH, 'test_seqs_padded.pkl')
 dataset = DataSet()
 train, val, test = dataset.train, dataset.val, dataset.test
 
-stopwords = gen_stopwords(HIT_TXT)
+#stopwords = gen_stopwords(HIT_TXT)
+stopwords = None
 
 # tradtional 2 simple
 def rm_quomarks(x):

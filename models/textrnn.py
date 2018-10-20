@@ -53,7 +53,7 @@ class CuDNNGRULast(BaseRNN):
         out2 = shared_spdropout(out2)
         out2 = shared_gru(out2)
         out = Concatenate()([out1, out2])
-        # out = out1
+        out = out2
         out = Dropout(0.5)(out)
         out = BatchNormalization()(out)
         return out

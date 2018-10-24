@@ -2,6 +2,8 @@ import numpy as np
 from .base import SingleModel
 from keras.layers import Input, Embedding, Conv1D, MaxPooling1D, Concatenate
 from keras.layers import GlobalMaxPooling1D, Dense, Dropout, BatchNormalization
+from keras.layers import SpatialDropout1D, CuDNNGRU, Bidirectional
+from keras.layers import GlobalAveragePooling1D
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
@@ -12,8 +14,9 @@ class OwnSingleModel(SingleModel):
     def _build(self, *args, **kwargs):
         max_len = kwargs['max_len']
         embedding = kwargs.get('embedding')
+        emb_dim = embedding.shape[1]
         inp = Input(shape = (max_len,))
-        out0 = self._base0(inp, embedding=embedding)
+        out0 = self._base0(inp, embedding=embedding, dim = emb_dim)
         out1 = self._base1(out0)
         out2 = self._base2(out0)
         out3 = self._base3(out0)
@@ -71,14 +74,14 @@ class OwnSingleModel(SingleModel):
                   ]
         return Model(inputs = inputs, outputs = outputs)
 
-    def _base0(self, inp, words_num = 50000, embedding = None):
+    def _base0(self, inp, embedding, words_num = 50000, dim = 300):
         """
         Embedding Layers
         """
         if embedding is None:
-            out = Embedding(words_num, 100)(inp)
+            out = Embedding(words_num, dim)(inp)
         else:
-            out = Embedding(words_num, 100, weights = [embedding], trainable = False)(inp)
+            out = Embedding(words_num, dim, weights = [embedding], trainable = True)(inp)
         # out = Conv1D(32, 3, activation = 'relu')(out)
         # out = Conv1D(32, 3, activation = 'relu')(out)
         # out = MaxPooling1D(2)(out)
@@ -91,6 +94,16 @@ class OwnSingleModel(SingleModel):
         # out = Conv1D(256, 3, activation = 'relu')(out)
         # out = Conv1D(256, 3, activation = 'relu')(out)
         # out = GlobalMaxPooling1D()(out)
+
+        out = SpatialDropout1D(0.5)(out)
+        #out = CuDNNGRU(300)(out)
+        #out = Bidirectional(CuDNNGRU(200, return_sequences=True))(out)
+        #out = Bidirectional(CuDNNGRU(200, return_sequences=True))(out)
+        #out1 = GlobalMaxPooling1D()(out)
+        #out2 = GlobalAveragePooling1D()(out)
+        #out = Concatenate()([out1, out2])
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
         return out
 
     def _basei(self, inp):
@@ -104,17 +117,35 @@ class OwnSingleModel(SingleModel):
         #out = BatchNormalization()(out)
         #out = MaxPooling1D(2)(out)
         #out = GlobalMaxPooling1D()(out)
+
+        # out = SpatialDropout1D(0.5)(out)
+        out = CuDNNGRU(300, return_sequences = True)(out)
+        #out = SpatialDropout1D(0.5)(out)
+        out = CuDNNGRU(300)(out)
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
+        #out = Dense(200, activation = 'relu')(out)
+        out = Dropout(0.5)(out)
+        out = BatchNormalization()(out)
         return out
 
     def _clsi_j(self, inp):
         out = inp
-        out1 = Conv1D(32, 3, activation= 'relu')(out)
-        out1 = GlobalMaxPooling1D()(out1)
-        out2 = Conv1D(32, 5, activation= 'relu')(out)
-        out2 = GlobalMaxPooling1D()(out2)
-        out3 = Conv1D(32, 7, activation= 'relu' )(out)
-        out3 = GlobalMaxPooling1D()(out3)
-        out = Concatenate(axis= -1)([out1, out2, out3])
+        # out1 = Conv1D(32, 3, activation= 'relu')(out)
+        # out1 = GlobalMaxPooling1D()(out1)
+        # out2 = Conv1D(32, 5, activation= 'relu')(out)
+        # out2 = GlobalMaxPooling1D()(out2)
+        # out3 = Conv1D(32, 7, activation= 'relu' )(out)
+        # out3 = GlobalMaxPooling1D()(out3)
+        # out = Concatenate(axis= -1)([out1, out2, out3])
+
+        #out = SpatialDropout1D(0.5)(inp)
+        #out = CuDNNGRU(100)(out)
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
+        #out = Dense(100, activation = 'relu')(out)
+        #out = Dropout(0.5)(out)
+        #out = BatchNormalization()(out)
         return Dense(4, activation = 'softmax')(out)
 
     def _base1(self, inp):
@@ -217,7 +248,7 @@ class OwnSingleModel(SingleModel):
         lr = 1e-3
         BATCH_SIZE = 64
         EPOCHS = 300
-        PATIENCE = 4
+        PATIENCE = 6
         model_file = kwargs['model_file']
         val_inputs, val_outputs = kwargs['validation_data']
 
@@ -236,8 +267,8 @@ class OwnSingleModel(SingleModel):
                                      verbose = 1,
                                      val_data = (val_inputs, val_outputs)),
                EarlyStopping(patience = PATIENCE),
-               ReduceLROnPlateau('val_loss', factor = 0.1, verbose = 1,
-                                 patience = int(PATIENCE / 2))
+               ReduceLROnPlateau('val_loss', factor = 0.2, verbose = 1,
+                                 patience = int(PATIENCE / 3))
               ]
         history = self._model.fit(inputs, outputs,
                                   epochs = EPOCHS,

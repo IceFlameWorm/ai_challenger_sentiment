@@ -46,14 +46,22 @@ class BaseRNN(SSingleModel):
 class CuDNNGRULast(BaseRNN):
     def _rnn(self, inp1, inp2):
         out1, out2 = inp1, inp2
-        shared_spdropout = SpatialDropout1D(0.5)
-        shared_gru = CuDNNGRU(300)
-        out1 = shared_spdropout(out1)
-        out1 = shared_gru(out1)
-        out2 = shared_spdropout(out2)
-        out2 = shared_gru(out2)
-        out = Concatenate()([out1, out2])
+        # shared_spdropout = SpatialDropout1D(0.5)
+        # shared_gru = CuDNNGRU(300)
+        # out1 = shared_spdropout(out1)
+        # out1 = shared_gru(out1)
+        # out2 = shared_spdropout(out2)
+        # out2 = shared_gru(out2)
+        # out = Concatenate()([out1, out2])
+        # out = out2
+        # out = Dropout(0.5)(out)
+        # out = BatchNormalization()(out)
+
         out = out2
+        out = SpatialDropout1D(0.5)(out)
+        out = CuDNNGRU(300, return_sequences = True)(out)
+        #out = SpatialDropout1D(0.5)(out)(out)
+        out = CuDNNGRU(300)(out)
         out = Dropout(0.5)(out)
         out = BatchNormalization()(out)
         return out
